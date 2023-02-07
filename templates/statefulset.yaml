@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  serviceName: {{ .Release.Name }}-{{ .Chart.Name }}
+  replicas: {{ .Values.replica.count }}
+  minReadySeconds: {{ .Values.minReadySeconds }}
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      nodeSelector:
+        cloud.google.com/gke-accelerator: {{ .Values.gpu.type }}
+      containers:
+      - name: {{ .Release.Name }}-{{ .Chart.Name }}-first
+        image: {{ .Values.simulation.image }}
+        command: ["/bin/bash", "-c", ]
+        args: ["/usr/bin/entrypoint.sh"]
+        resources:
+            limits:
+              nvidia.com/gpu: {{ .Values.simulation.resources.gpu }}
+            requests:
+              cpu: {{ .Values.simulation.resources.cpu }}
+              memory: {{ .Values.simulation.resources.memory }}
+      - name: {{ .Release.Name }}-{{ .Chart.Name }}-second
+        image: {{ .Values.apollo.image }}
+        command: ["/bin/bash", "-c", ]
+        args: ["/usr/bin/entrypoint.sh"]
+        env:
+        # - name: PATTERN_INSTANCE_ID
+        #   value: "cloud"
+        - name: PATTERN_APPLICATION
+          value: "autonomy"
+        - name: PATTERN_PLATFORM
+          value: "robot"
+        - name: PATTERN_MACHINE
+          value: "cloud"
+        - name: USE_GPU_HOST
+          value: "1"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,video,graphics,utility"
+        resources:
+            limits:
+              nvidia.com/gpu: {{ .Values.apollo.resources.gpu }}
+            requests:
+              cpu: {{ .Values.apollo.resources.cpu }}
+              memory: {{ .Values.apollo.resources.memory }}
+      imagePullSecrets:
+      - name: pattern.docker.credentials

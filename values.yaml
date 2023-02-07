@@ -1,0 +1,26 @@
+gpu:
+  type: nvidia-tesla-t4
+
+minReadySeconds: 10 # seconds to wait after the sim is stable before launching the next sim
+terminationGracePeriodSeconds: 10 
+
+
+replica:
+  count:  6
+
+simulation:
+  cluster_port: 28349 # don't change this its hardcoded
+  api_port: 8181 # don't change this either unless you change the sim
+  image: patternlabs/vkdbg:0.1
+  resources:
+    gpu: 1
+    cpu: 4
+    memory: 32G
+
+apollo:
+  image: patternlabs/vkdbg:0.1
+  resources:
+    gpu: 1
+    cpu: 12
+    memory: 32G
+
